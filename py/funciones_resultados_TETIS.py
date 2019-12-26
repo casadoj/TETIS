@@ -10,7 +10,6 @@
 # -  `agregar_ascii` lee los mapas generados para una variable y los agrega en un único mapa.
 # -  `corregir_ascii` corrige los mapas cuando tienen valores tan grandes que no entran en el espacio reservado en el archivo de resultados y son guardados como "************".
 # 
-# 
 # __Cosas a corregir__ <br>
 # 
 # 
@@ -818,4 +817,3 @@ def excedencia(data, col):
     exceedance['exc'] = np.linspace(100/exceedance.shape[0], 100, num=exceedance.shape[0])
     
     return exceedance
-
