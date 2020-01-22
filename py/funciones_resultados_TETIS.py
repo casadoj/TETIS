@@ -21,7 +21,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-whitegrid')
+#plt.style.use('seaborn-whitegrid')
 import matplotlib.gridspec as gridspec
 import datetime
 from calendar import monthrange
