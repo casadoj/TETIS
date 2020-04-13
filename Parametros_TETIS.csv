@@ -1,0 +1,21 @@
+Factor,Descripción,Minimo,Maximo,Defecto
+FC1,Almacenamiento capilar, 0.01,3,1
+FC2,Evaporación,0,2,1
+FC3,Infiltración,0,1.5,0.2
+FC4,Escorrentía directa,0.001,10,1
+FC5,Percolación,0,1.5,0.4
+FC6,Flujo subsuperficial,0.001,5000,10
+FC7,Pérdidas subterráneas,0,1,0.5
+FC8,Flujo base,0.001,50000,200
+FC9,Velocidad del flujo,0,1.5,1
+FC0,Precipitación,0,2,1
+Bnieve,Coeficiente de interpolación de la altura de nieve con la cota,0,10,1
+DDF1,Coeficiente de fusión de la nieve sin lluvia,1,3,1
+DDF2,Coeficiente de fusión de la nieve con lluvia,3,6,1
+Tb,Temperatura base de fusión de la nieve,-2,4,1
+Bppt,Coeficiente de interpolación de la precipitación con la cota,-0.2,0.2,0
+USLE1,Erosión en ladera,,,1
+USLE2,Capacidad de transporte de sedimentos en cárcavas,,,1
+USLE3,Capacidad de transporte de sedimentos en cauce,,,1
+p1,Exponente de infiltración al tanque estático,0,3,0
+H3max,Porcentaje de Hu que define la capacidad máxima del tanque gravitacional,0,1000000,100000
