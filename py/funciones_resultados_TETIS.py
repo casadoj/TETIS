@@ -1,27 +1,27 @@
 
 # _Autor:_    __Jesús Casado__ <br> _Revisión:_ __12/06/2019__ <br>
-# 
+#
 # __Introducción__<br>
 # Se importa y analizo el archivo de resultados del modelo TETIS.
-# 
+#
 # Se incluyen tres funciones para leer las salidas de TETIS y generar las series en csv y los mapas en ASCII:
 # -  `leer_caudal` genera las series de caudal observado y simulado en formato 'data frame' a partir del archivo de resultados de caudal.
 # -  `leer_sedimento` genera las series de caudal sólido observado y simulado en formato 'data frame' a partir del archivo de resultados de sedimentos.
 # -  `agregar_ascii` lee los mapas generados para una variable y los agrega en un único mapa.
 # -  `corregir_ascii` corrige los mapas cuando tienen valores tan grandes que no entran en el espacio reservado en el archivo de resultados y son guardados como "************".
-# 
+#
 # __Cosas a corregir__ <br>
-# 
-# 
+#
+#
 # __Índice__<br>
-# 
+#
 # [1. Lectura de resultados](#1.-Lectura-de-resultados)<br>
 # [2. Criterios de rendimiento](#2.-Criterios-de-rendimiento)<br>
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-plt.style.use('seaborn-whitegrid')
+#plt.style.use('seaborn-whitegrid')
 import matplotlib.gridspec as gridspec
 import datetime
 from calendar import monthrange
@@ -39,7 +39,7 @@ from scipy.interpolate import griddata
 
 def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True):
     """Lee el archivo de resultados de la simulación y genera las series de caudal simulado (observado) para las estaciones de aforo y los puntos de control.
-    
+
     Parámetros:
     -----------
     path:      string. Ruta donde se encuentra el archivo de resultados y donde se exportará la serie generada.
@@ -48,7 +48,7 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
     plot:      boolean. Si se quieren plotear las series generadas.
 	export:    boolean. Si se quieren exportar las series generadas.
     verbose:   boolean. Si se quiere mostrar en pantalla la dimensión de las series calculadas.
-    
+
     Salidas:
     --------
     leer_caudal:   object. Consistente en una serie de métodos que contienen la información extraída:
@@ -59,18 +59,18 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
                            control:    list. Listado del código de los puntos de control, si los hubiera.
     Los dos 'data frame' se pueden exportar en formato csv en la carpeta 'path' con los nombres 'Qobs_añoinicio-añofin.csv' y 'Qsim_añoinicio-añofin.csv'.
     Además, se puede generar un gráfico con las series de caudal observado y simulado."""
-        
+
     # Abrir la conexión con el archivo de resultados y leer todas las líneas en la lista 'res'
     with open(path + file) as r:
         res = r.readlines()
         res = [x.strip() for x in res]
     r.close()
-    
+
     # Extraer la fecha del inicio de la simulación como "datetime.date"
     start = pd.to_datetime(res[14].split()[1], dayfirst=True).date()
     # Extraer el número de pasos temporales
     timesteps = int(res[17].split()[1])
-    
+
     # Extraer las estaciones de aforo, las de control y la línea en la que empieza a aparecer la serie
     embalses = []
     aforos = []
@@ -89,7 +89,7 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
     leer_caudal.embalses, leer_caudal.aforos, leer_caudal.control = embalses, aforos, control
     skiprows = i
     del i
-    
+
     # Generar la serie de caudal
     # --------------------------
     # Importar la serie
@@ -97,7 +97,7 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
     if verbose == True:
         print('Nº embalses:', len(embalses), '\tNº aforos:', len(aforos), '\tNº control:', len(control))
     results = pd.read_csv(path + file, delim_whitespace=True,
-                         skiprows=skiprows, nrows=timesteps, header=0, 
+                         skiprows=skiprows, nrows=timesteps, header=0,
                          usecols=range(usecols), index_col=0)
     # Corregir columnas
     results.index.name = results.columns[0]
@@ -152,7 +152,7 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
             ymax = np.ceil(caudal_sim.max().max() / 100) * 100
         plt.ylim((0, ymax))
         plt.ylabel('Q (m³/s)', fontsize=12);
-    
+
     # Exportar las series
     if not os.path.exists(path + 'resultados/series/caudal/'):
         os.makedirs(path + 'resultados/series/caudal/')
@@ -160,7 +160,7 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
     if observed == True:
         caudal_obs.to_csv(path + 'resultados/series/caudal/Qobs' + output, float_format='%.1f')
     caudal_sim.to_csv(path + 'resultados/series/caudal/Qsim' + output, float_format='%.1f')
-    
+
     if observed == True:
         leer_caudal.observado = caudal_obs
     leer_caudal.simulado = caudal_sim
@@ -169,32 +169,32 @@ def leer_caudal(path, file, observed=True, plot=True, export=True, verbose=True)
 def leer_embalses(path, file, observed=True, plot=True):
     """Lee el archivo de resultados de la simulación y genera las series de caudal simulado (observado) para las estaciones
     de aforo y los puntos de control.
-    
+
     Parámetros:
     -----------
     path:      string. Ruta donde se encuentra el archivo de resultados y donde se exportará la serie generada.
     file:      string. Nombre del archivo de resultados con extensión (.res).
     observed:  boolean. Si hay observaciones de caudal sólido. En ese caso se extraen las series observadas.
     plot:      boolean. Si se quieren plotear las series generadas.
-    
+
     Salidas:
     --------
     caudal_obs:   dataframe. Serie de caudales observados (m³/s). Sólo si 'observed' es True.
     caudal_sim:   dataframe. Serie de caudales simulados (m³/s).
     Estos dos 'data frame' se exportan en formato csv en la carpeta 'path' con los nombres 'Qobs_añoinicio-añofin.csv'
     y 'Qsim_añoinicio-añofin.csv'."""
-        
+
     # Abrir la conexión con el archivo de resultados y leer todas las líneas en la lista 'res'
     with open(path + file) as r:
         res = r.readlines()
         res = [x.strip() for x in res]
     r.close()
-    
+
     # Extraer la fecha del inicio de la simulación como "datetime.date"
     start = pd.to_datetime(res[14].split()[1], dayfirst=True).date()
     # Extraer el número de pasos temporales
     timesteps = int(res[17].split()[1])
-    
+
     # Extraer las estaciones de aforo, las de control y la línea en la que empieza a aparecer la serie
     embalses = []
     for i in range(len(res)):
@@ -206,13 +206,13 @@ def leer_embalses(path, file, observed=True, plot=True):
                 break
     skiprows = i
     del i
-    
+
     # Generar la serie de caudal
     # --------------------------
     # Importar la serie
     usecols = 2 + 7*len(embalses)
     results = pd.read_csv(path + file, delim_whitespace=True,
-                         skiprows=skiprows, nrows=timesteps, header=0, 
+                         skiprows=skiprows, nrows=timesteps, header=0,
                          usecols=range(1, usecols), index_col=0)
 
     # Generar series de los embalses (si así se especifica)
@@ -237,7 +237,7 @@ def leer_embalses(path, file, observed=True, plot=True):
         simcols += [1 + i*5, 3 + i*5]
     reserv_obs = reserv.iloc[:, obscols]
     reserv_sim = reserv.iloc[:, simcols]
-    
+
     # Plotear las series
     if plot == True:
         plt.figure(figsize=(18, 5))
@@ -249,13 +249,13 @@ def leer_embalses(path, file, observed=True, plot=True):
         plt.ylim((0, ymax))
         plt.ylabel('Q (m³/s)', fontsize=12)
         plt.legend();
-        
+
     # Exportar las series
     output = '_' + str(caudal_sim.index[0].year) + '-' + str(caudal_sim.index[-1].year) + '.csv'
     if observed == True:
         caudal_obs.to_csv(path + 'resultados/series/caudal/Qobs' + output, float_format='%.1f')
     caudal_sim.to_csv(path + 'resultados/series/caudal/Qsim' + output, float_format='%.1f')
-    
+
     if observed == True:
         if reservoir == True:
             return caudal_obs, caudal_sim, reserv_obs, reserv_sim
@@ -271,34 +271,34 @@ def leer_embalses(path, file, observed=True, plot=True):
 def leer_sedimento(path, file, observed=True, plot=True):
     """Lee el archivo de resultados de la simulación de sedimentos y genera las series simuladas para los puntos
     de control de sedimentos, los aforos de caudal y los puntos de control.
-    
+
     Parámetros:
     -----------
     path:      string. Ruta donde se encuentra el archivo de resultados y donde se exportará la serie generada.
     file:      string. Nombre del archivo de resultados con extensión (.txt).
     observed:  boolean. Si hay observaciones de caudal sólido. En ese caso se extraen las series observadas.
     plot:      boolean. Si se quieren plotear las series generadas.
-    
+
     Salidas:
     --------
     sed_obs:   dataframe. Serie de caudales de sedimento observados (m³/s). Sólo si 'observed' es True.
     sed_sim:   dataframe. Serie de caudales de sedimento simulados (m³/s).
     Estos dos 'data frame' se exportan en formato csv en la carpeta 'path' con los nombres 'Sobs_añoinicio-añofin.csv'
     y 'Ssim_añoinicio-añofin.csv'."""
-    
+
     # Abrir la conexión con el archivo de resultados y leer todas las líneas en la lista 'res'
     with open(path + file) as r:
         res = r.readlines()
         res = [x.strip() for x in res]
     r.close()
-    
+
     # Extraer la fecha del inicio de la simulación como "datetime.date"
     start = pd.to_datetime(res[14].split()[1], dayfirst=True).date()
     # Extraer el número de pasos temporales
     timesteps = int(res[17].split()[1])
     # Generar las fechas
     dates = pd.date_range(start, periods=timesteps)
-    
+
     # Extraer las estaciones de aforo de sedimento, aforo líquido y control (si éstas existieran)
     afo_q = []
     control = []
@@ -329,14 +329,14 @@ def leer_sedimento(path, file, observed=True, plot=True):
     leer_sedimento.afo_q, leer_sedimento.control, leer_sedimento.afo_s = afo_q, control, afo_s
     # Línea del archivo en la que empieza la primera serie
     skiprows = i + 2
-    
+
     # Crear el(los) 'data frame' vacío donde se guardarán las series simuladas(observadas)
     sed_sim = pd.DataFrame(data=np.nan, index=dates, columns=afo_s + afo_q + control)
     sed_sim.index.name = 'fecha'
     if observed == True:
         sed_obs = pd.DataFrame(data=np.nan, index=dates, columns=afo_s)
         sed_obs.index.name = 'fecha'
-    
+
     # Extraer las series en las estaciones de aforo de sedimentos
     # -----------------------------------------------------------
     for j in range(len(afo_s)):
@@ -344,7 +344,7 @@ def leer_sedimento(path, file, observed=True, plot=True):
             if observed == True:
                 sed_obs.iloc[i, j] = float(res[l].split()[1])
             sed_sim.iloc[i, j] = float(res[l].split()[2])
-    
+
     # Extraer las series en las estaciones de aforo de caudal
     # -------------------------------------------------------
     for j in range(len(afo_q)):
@@ -358,7 +358,7 @@ def leer_sedimento(path, file, observed=True, plot=True):
         # Extraer la serie de la estación 'j'
         for i, l in enumerate(range(skiprows, skiprows + timesteps)):
             sed_sim.iloc[i, j + len(afo_s)] = float(res[l].split()[5])
-    
+
     # Extraer las series en los puntos de control
     # -------------------------------------------
     # Encontrar la fila en la que empiezan las series
@@ -373,7 +373,7 @@ def leer_sedimento(path, file, observed=True, plot=True):
         for j in range(len(control)):
             k = j + len(afo_s) + len(afo_q)
             sed_sim.iloc[i, k] = float(res[l].split()[j + 1])
-    
+
     # Plotear las series
     if observed == True:
         print('Dimensión serie observada:\t', sed_obs.shape)
@@ -390,7 +390,7 @@ def leer_sedimento(path, file, observed=True, plot=True):
         plt.ylim((0, ymax))
         plt.ylabel('Qsed (m³/s)', fontsize=12)
         #plt.legend(fontsize=12);
-        
+
     # Exportar las series
     if not os.path.exists(path + 'resultados/series/sedimento/'): #comprobar si existe la carpeta de salida
         os.makedirs(path + 'resultados/series/sedimento/')
@@ -398,7 +398,7 @@ def leer_sedimento(path, file, observed=True, plot=True):
     if observed == True:
         sed_obs.to_csv(path + 'resultados/series/sedimento/Sobs' + output, float_format='%.3f')
     sed_sim.to_csv(path + 'resultados/series/sedimento/Ssim' + output, float_format='%.3f')
-    
+
     if observed == True:
         leer_sedimento.observado = sed_obs
         leer_sedimento.simulado = sed_sim
@@ -409,7 +409,7 @@ def leer_sedimento(path, file, observed=True, plot=True):
 def agregar_ascii(path, variable='H0', period=None, aggregation='mean', format='%12.5f '):
     """Lee todos los mapas de la variable 'variable' dentro de la carpeta 'path', los agrega según la función especificada
     y los exporta a un nuevo archivo ASCII en la misma carpeta con el formato indicado.
-    
+
     Parámetros:
     -----------
     path:        string. Ruta de la carpeta del proyecto TETIS.
@@ -417,17 +417,17 @@ def agregar_ascii(path, variable='H0', period=None, aggregation='mean', format='
     period:      list of integers. Años inicial y final del periodo de estudio
     aggregation: string. Función de agregación de los mapas: 'mean' o 'sum'.
     format:      string. Formato en el que se quieren exportar los datos.
-    
+
     Salidas:
     --------
     Se exporta un ASCII dentro de la carpeta con el nombre 'variable_añoinicio-añofin_aggregation.asc'.
     agg_map:     array. Un 'array' 2D con el mapa agregado."""
-    
+
     # Leer los archivos de la carpeta respectivos a la variable
     n = len(variable)
     var_files = []
     # seleccionar archivos de la variable indicada
-    for file in os.listdir(path + '_ASCII/'): 
+    for file in os.listdir(path + '_ASCII/'):
         if file[:n] == variable:
             var_files.append(file)
     # seleccionar archivos dentro del periodo de estudio
@@ -444,7 +444,7 @@ def agregar_ascii(path, variable='H0', period=None, aggregation='mean', format='
     else:
         start = var_files[0][n + 1: n + 5]
         end = var_files[-1][n + 1: n + 5]
-            
+
     # Abrir la conexión con un archivo de resultados y leer todas las líneas en la lista 'res'
     with open(path + '_ASCII/' + var_files[0]) as r:
         res = r.readlines()
@@ -459,12 +459,12 @@ def agregar_ascii(path, variable='H0', period=None, aggregation='mean', format='
     cellsize = float(res[4].split()[1])
     NODATA_value = int(res[5].split()[1])
     del res
-    
+
     # 3D 'array' con los mapas de la variable
     maps = np.empty([len(var_files), nrows, ncols])
     for i, file in enumerate(var_files):
         maps[i::] = np.loadtxt(path + '_ASCII/' + file, skiprows=6)
-    
+
     # Crear el mapa agregado según la función especificada
     if aggregation == 'mean':
         agg_map = maps.mean(axis=0)
@@ -475,7 +475,7 @@ def agregar_ascii(path, variable='H0', period=None, aggregation='mean', format='
         agg_map[agg_map >= 0] = agg_map[agg_map >= 0] * 365
     elif variable == 'P4': # convertir la erosión de m³/celda a m y a valores positivos
         agg_map[agg_map != NODATA_value] = -1 * agg_map[agg_map != NODATA_value] / cellsize**2
-    
+
     # Exportar el mapa como ASCII
     if not os.path.exists(path + 'resultados/mapas/'):
         os.makedirs(path + 'resultados/mapas/')
@@ -499,23 +499,23 @@ def corregir_ascii(path, variable='H0', format='%12.5f '):
     """Lee todos los mapas de la variable 'variable' dentro de la carpeta 'path', encuentra si hay algún dato erróneo en el
     que la magnitud es superior al espacio de la columna y por tanto se guarda como '************' y lo completa como la
     media de las celdas alrededor.
-    
+
     Parámetros:
     -----------
     path:        string. Ruta de la carpeta del proyecto TETIS.
     variable:    string. Variable que se quiere estudiar. Debe coincidir con el inicio del nombre de los archivos ASCII.
     format:      string. Formato en el que se quieren exportar los datos.
-    
+
     Salidas:
     --------
     Se sobreescribe el ASCII corregido."""
-    
+
     # Leer los archivos de la carpeta respectivos a la variable
     var_files = []
     for file in os.listdir(path + '_ASCII/'):
         if file[:len(variable)] == variable:
             var_files.append(file)
-    
+
     for file in var_files:
         # Abrir la conexión con un archivo de resultados y leer todas las líneas en la lista 'res'
         with open(path + '_ASCII/' + file) as r:
@@ -563,7 +563,7 @@ def corregir_ascii(path, variable='H0', format='%12.5f '):
 
 def leer_SCEUA(path, file, plot=True, s=6):
     """Lee el archivo de resultados de la calibración y crea dos 'data frames' con los resultados.
-    
+
     Parámetros:
     -----------
     path:      string. Ruta donde se encuentra el archivo de resultados y donde se exportará la serie generada.
@@ -571,14 +571,14 @@ def leer_SCEUA(path, file, plot=True, s=6):
     plot:      boolean. Si se quieren plotear un diagrama de dispersión con el valor de la función objetivo en función
                del valor normalizado de cada uno de los parámetros calibrados
     s:         integer. Tamaño de los puntos del diagrama de dispersión
-    
+
     Salidas:
     --------
     leer_SCEUA:   object. Consistente en una serie de métodos que contienen la información extraída:
                            parametros: dataframe. Contiene los parámetros calibrados, el rango de variación, el valor
                                        inicial y el valor optimizado
                            SCEUA:      dataframe. Contiene los datos de cada una de las iteraciones de la calibración
-    Además, se puede generar un diagrama de dispersión del valor de la función objetivo para cada parámetro 
+    Además, se puede generar un diagrama de dispersión del valor de la función objetivo para cada parámetro
     (normalizado de 0 a 1)"""
 
     # Abrir la conexión con el archivo de resultados y leer todas las líneas en la lista 'res'
@@ -602,7 +602,7 @@ def leer_SCEUA(path, file, plot=True, s=6):
         rang = [float(x) for x in aux[1:]]
         rangos.loc[par,:] = rang
     rangos.index = [i.replace('R', 'FC') if i[0] == 'R' else 'H3max' if i[:3] == 'Cap' else i for i in rangos.index]
-    
+
     # Nombre de las funciones objetivo
     OFs = []
     for i in range(l + 1, len(res)):
@@ -668,7 +668,7 @@ def leer_SCEUA(path, file, plot=True, s=6):
             col = i % ncols
             ax = plt.subplot(gs[row, col])
             ax.scatter(SCEUA[pnorm], SCEUA[OF], s=s)#, c='steelblue')
-            bestx, bestOF = SCEUA.loc[bestIdx, pnorm], SCEUA.loc[bestIdx, OF] 
+            bestx, bestOF = SCEUA.loc[bestIdx, pnorm], SCEUA.loc[bestIdx, OF]
             ax.scatter(bestx, bestOF, s=4*s)
             if OF == 'NSE':
                 ylim = (-1, 1)
@@ -685,36 +685,36 @@ def leer_SCEUA(path, file, plot=True, s=6):
 
 
 def rendimiento(observed, simulated, monthly=True, aggregation='mean', skip=None, steps=None):
-    """Sobre un par de series diarias (observada y simulada) genera la serie mensual según el método de agregración 
+    """Sobre un par de series diarias (observada y simulada) genera la serie mensual según el método de agregración
     definido. Posteriormente, sobre estas dos series, calcula tres criterios de rendimiento: el coeficiente de eficiencia de Nash-
     Sutcliffe (NSE), el sesgo en volumen (%V) y la raíz del error cuadrático medio (RMSE) para cada cuenca en las series
     y los coloca en un 'data frame' que posteriormente exporta.
-    
+
     Parámetros:
     -----------
     observed:    dataframe. Serie observada; cada fila representa una fila y cada columna una estación.
     simulated:   dataframe. Serie simulada; cada fila representa una fila y cada columna una estación.
     monthly:     boolean. Si se quieren calcular los estadísticos sobre la serie mensual (por defecto) o no.
     aggregation: string. Si 'monthly' es True, tipo de agregación de los datos diarios a mensuales.
-    skip:        integer. Número de pasos temporales a evitar en el cálculo de los criterios por considerarse 
+    skip:        integer. Número de pasos temporales a evitar en el cálculo de los criterios por considerarse
                  calentamiento. Si 'monthly' es True, 'skip' se refiere al número de meses.
-    steps:       integer. Número de meses a tener en cuenta a partir de 'skipmonths'. Si 'monthly' es True, 'skip' se 
+    steps:       integer. Número de meses a tener en cuenta a partir de 'skipmonths'. Si 'monthly' es True, 'skip' se
                  refiere al número de meses.
-    
+
     Salidas:
     --------
     Se genera un objeto llamado 'rendimiento' con los siguientes métodos:
     obs_month:       dataframe. Serie agregada mensual de las observaciones. Sin recortar
     sim_month:       dataframe. Serie agregada mensual de la simulación. Sin recortar
     performance: dataframe. Valores de los tres criterios para cada estación y el periodo de estudio"""
-    
+
     # Recortar las series para que tengan la misma longitud
     if observed.shape[0] != simulated.shape[0]:
         min_ind = max(observed.index[0], simulated.index[0])
         max_ind = min(observed.index[-1], simulated.index[-1])
         observed = observed.loc[min_ind:max_ind, :]
         simulated = simulated.loc[min_ind:max_ind, :]
-    
+
     # Calcular las series mensuales
     if monthly == True:
         obs = observed.groupby(by=[observed.index.year, observed.index.month]).aggregate([aggregation])
@@ -735,7 +735,7 @@ def rendimiento(observed, simulated, monthly=True, aggregation='mean', skip=None
     else:
         obs = observed
         sim = simulated
-    
+
     # 'data frame' donde se guardará el rendimiento de cada cuenca
     performance = pd.DataFrame(index=['NSE', '%V', 'RMSE'], columns=observed.columns)
     performance.index.name = 'criterio'
@@ -757,7 +757,7 @@ def rendimiento(observed, simulated, monthly=True, aggregation='mean', skip=None
         performance.loc['%V', stn] = sesgo(data)
         performance.loc['RMSE', stn] = RMSE(data)
         del data
-    
+
     #return obs, sim, performance
     rendimiento.performance = performance
 
@@ -765,20 +765,20 @@ def rendimiento(observed, simulated, monthly=True, aggregation='mean', skip=None
 # __Gráficas__
 
 
-def hidrograma(simulado, stn, observado=None, xlim=None, 
+def hidrograma(simulado, stn, observado=None, xlim=None,
                labels=['observado', 'simulado']):
     """Genera un gráfico con el hidrograma para las dos series de entrada y la estación indicada.
-    
+
     Parámetros:
     -----------
-    simulado:  data frame. Contiene las serie temporal de caudales simulados (o serie 2). Uno de sus columnas será 
+    simulado:  data frame. Contiene las serie temporal de caudales simulados (o serie 2). Uno de sus columnas será
                'stn'
     stn:       string/integer. Nombre de la columna de 'observado' y 'simulado' que se mostrará
-    observado: data frame. Contiene la serie temporal de caudales obesrvados (o serie 1). Uno de sus columnas será 
+    observado: data frame. Contiene la serie temporal de caudales obesrvados (o serie 1). Uno de sus columnas será
                'stn'. Por defecto 'None', es decir, no hay serie obesrvada
     xlim:      list of dates. Dos fechas con el inicio y final del hidrograma
     labels     list of strings. Los nombres de ambas series
-    
+
     Salidas:
     --------
     Un gráfico con dos líneas correspondientes a los dos hidrogramas."""
@@ -790,7 +790,7 @@ def hidrograma(simulado, stn, observado=None, xlim=None,
     else:
         ymax = np.ceil(simulado.loc[:, stn].max() / 10) * 10
     plt.plot(simulado.loc[:, stn], c='maroon', linewidth=0.8, alpha=1, label=labels[1])
-    if xlim is not None:    
+    if xlim is not None:
         plt.xlim(xlim)
     plt.ylabel('Q (m³/s)', fontsize=13)
     plt.ylim((0, ymax))
@@ -800,20 +800,20 @@ def hidrograma(simulado, stn, observado=None, xlim=None,
 
 def excedencia(data, col):
     """Calcular la probabilidad de excedencia de una serie temporal.
-    
+
     Parámetros:
     -----------
     data:      data frame. Contiene las series temporales y al menos una columna llamada 'col'.
     col:       string/integer. Nombre de la columna sobre la que calcular la excedencia.
-    
+
     Salidas:
     --------
     exceedance: data frame. Una data frame de dos columnas, una con una copia de data[col], y otra llamada 'exc' con
                 la probabilidad de excedencia del valor de la serie en cada paso temporal.
     """
-    
+
     exceedance = pd.DataFrame(data[col]).copy()
     exceedance.sort_values(col, axis=0, ascending=False, inplace=True)
     exceedance['exc'] = np.linspace(100/exceedance.shape[0], 100, num=exceedance.shape[0])
-    
+
     return exceedance
